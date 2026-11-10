@@ -1,0 +1,68 @@
+# XcodeGen 설정. `xcodegen generate` 로 GitHubTrending.xcodeproj 를 생성한다.
+# (Maven의 pom.xml처럼 프로젝트 구조를 텍스트로 선언 → .xcodeproj는 생성물이라 직접 편집하지 않음)
+name: GitHubTrending
+
+options:
+  bundleIdPrefix: com.jmkim
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+configFiles:
+  Debug: Signing.xcconfig
+  Release: Signing.xcconfig
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_HARDENED_RUNTIME: YES
+
+targets:
+  # 호스트 앱 (안내 화면만)
+  GitHubTrending:
+    type: application
+    platform: macOS
+    sources: [App]
+    dependencies:
+      - target: TrendingWidget   # 앱의 Contents/PlugIns 에 .appex 로 embed
+        embed: true
+        codeSign: true
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: GitHubTrending
+        LSApplicationCategoryType: public.app-category.developer-tools
+        NSHumanReadableCopyright: ""
+    entitlements:
+      path: App/GitHubTrending.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jmkim.GitHubTrending
+        GENERATE_INFOPLIST_FILE: YES
+
+  # 위젯 익스텐션
+  TrendingWidget:
+    type: app-extension
+    platform: macOS
+    sources: [Widget]
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: GitHubTrending
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Widget/TrendingWidget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true          # 위젯은 샌드박스 필수
+        com.apple.security.network.client: true       # 이게 없으면 URLSession 요청이 전부 실패
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jmkim.GitHubTrending.TrendingWidget  # 반드시 앱 ID로 시작
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES

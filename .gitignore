@@ -1,0 +1,8 @@
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+.DS_Store
+build.log
+Signing.xcconfig
+GitHubTrending.xcodeproj/
