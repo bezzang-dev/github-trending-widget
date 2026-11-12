@@ -1,7 +1,7 @@
 #!/bin/zsh
-# 파서 테스트 실행 스크립트. Xcode 없이 Command Line Tools만 있어도 동작.
-#   ./Tests/run_parser_tests.sh            # 저장된 HTML(Fixtures)로 테스트
-#   ./Tests/run_parser_tests.sh --refresh  # 실제 페이지를 다시 받아서 테스트 (구조 변경 확인용)
+# Runs the parser tests. Needs only the Command Line Tools, not Xcode.
+#   ./Tests/run_parser_tests.sh            # test against the saved HTML in Tests/Fixtures
+#   ./Tests/run_parser_tests.sh --refresh  # re-download the live pages first (to detect markup changes)
 set -euo pipefail
 ROOT="${0:A:h:h}"
 FIX="$ROOT/Tests/Fixtures"

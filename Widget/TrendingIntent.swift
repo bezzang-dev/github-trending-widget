@@ -1,11 +1,8 @@
 import AppIntents
 import WidgetKit
 
-// AppEnum = 위젯 편집 화면(우클릭 → "위젯 편집")에 드롭다운으로 노출되는 enum.
-// Java enum과 비슷하지만, 화면에 보일 이름(DisplayRepresentation)을 함께 제공해야 한다.
-//
-// Swift 6 메모: 프로토콜 요구사항이 `static var`라도 `static let`으로 구현한다.
-// `static var`는 "전역 가변 상태"라서 Swift 6에서 동시성 안전하지 않다는 에러가 난다.
+// Note: AppEnum requirements declared as `static var` are implemented with `static let`,
+// because mutable global state is a concurrency error in Swift 6.
 
 enum TrendingLanguage: String, AppEnum {
     case all, java, javascript, typescript, python, swift, kotlin, go, rust
@@ -19,7 +16,7 @@ enum TrendingLanguage: String, AppEnum {
         .dart: "Dart", .jupyterNotebook: "Jupyter Notebook",
     ]
 
-    /// /trending/<slug> 경로. nil이면 전체. (이미 퍼센트 인코딩된 값)
+    /// Percent-encoded path component for `/trending/<slug>`; nil means all languages.
     var pathSlug: String? {
         switch self {
         case .all: nil
@@ -30,9 +27,9 @@ enum TrendingLanguage: String, AppEnum {
         }
     }
 
-    var label: String {
+    func label(_ lang: AppLanguage) -> String {
         switch self {
-        case .all: "전체"
+        case .all: lang == .ko ? "전체" : "All"
         case .cpp: "C++"
         case .csharp: "C#"
         case .javascript: "JavaScript"
@@ -52,11 +49,14 @@ enum TrendingPeriod: String, AppEnum {
         .daily: "오늘", .weekly: "이번 주", .monthly: "이번 달",
     ]
 
-    var label: String {
-        switch self {
-        case .daily: "오늘"
-        case .weekly: "이번 주"
-        case .monthly: "이번 달"
+    func label(_ lang: AppLanguage) -> String {
+        switch (self, lang) {
+        case (.daily, .ko): "오늘"
+        case (.weekly, .ko): "이번 주"
+        case (.monthly, .ko): "이번 달"
+        case (.daily, .en): "Today"
+        case (.weekly, .en): "This week"
+        case (.monthly, .en): "This month"
         }
     }
 }
@@ -69,15 +69,82 @@ enum TrendingSpokenLanguage: String, AppEnum {
         .all: "전체", .ko: "한국어", .en: "영어", .zh: "중국어", .ja: "일본어",
     ]
 
-    /// ?spoken_language_code= 값. nil이면 파라미터 생략
+    /// Value for `spoken_language_code`; nil omits the parameter.
     var code: String? { self == .all ? nil : rawValue }
 }
 
-/// 위젯 설정 Intent. `@Parameter` 하나가 편집 화면의 항목 하나.
-/// (Spring의 @ConfigurationProperties 바인딩 대상 클래스를 떠올리면 된다 — 값은 시스템이 채워 줌)
+/// Requested delay before the next timeline reload. WidgetKit may defer it further.
+enum TrendingRefreshInterval: String, AppEnum {
+    case min15, min30, hour1, hour3, hour6, hour12
+
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "갱신 주기"
+    static let caseDisplayRepresentations: [TrendingRefreshInterval: DisplayRepresentation] = [
+        .min15: "15분", .min30: "30분", .hour1: "1시간",
+        .hour3: "3시간", .hour6: "6시간", .hour12: "12시간",
+    ]
+
+    var seconds: TimeInterval {
+        switch self {
+        case .min15: 15 * 60
+        case .min30: 30 * 60
+        case .hour1: 60 * 60
+        case .hour3: 3 * 60 * 60
+        case .hour6: 6 * 60 * 60
+        case .hour12: 12 * 60 * 60
+        }
+    }
+
+    /// Delay after a failed fetch: 15 minutes, capped at the regular interval.
+    var retrySeconds: TimeInterval { min(15 * 60, seconds) }
+}
+
+/// Number of repositories to show. Medium widgets are capped at `mediumMaxValue`.
+enum TrendingItemCount: String, AppEnum {
+    case three, five, seven, ten
+
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "표시 개수"
+    static let caseDisplayRepresentations: [TrendingItemCount: DisplayRepresentation] = [
+        .three: "상위 3개", .five: "상위 5개", .seven: "상위 7개", .ten: "상위 10개",
+    ]
+
+    var value: Int {
+        switch self {
+        case .three: 3
+        case .five: 5
+        case .seven: 7
+        case .ten: 10
+        }
+    }
+
+    /// Always fetch and cache this many, then slice per widget, so changing the count needs no refetch.
+    static let maxValue = 10
+    /// Rows that fit in a medium widget.
+    static let mediumMaxValue = 7
+}
+
+/// Language for the widget's text. `.system` follows the user's preferred languages.
+enum TrendingDisplayLanguage: String, AppEnum {
+    case system, ko, en
+
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "표시 언어"
+    static let caseDisplayRepresentations: [TrendingDisplayLanguage: DisplayRepresentation] = [
+        .system: "시스템 설정", .ko: "한국어", .en: "English",
+    ]
+
+    var resolved: AppLanguage {
+        switch self {
+        case .ko: .ko
+        case .en: .en
+        case .system:
+            Locale.preferredLanguages.first?.hasPrefix("ko") == true ? .ko : .en
+        }
+    }
+}
+
+/// Widget configuration. Each `@Parameter` is one row in the Edit Widget UI.
 struct TrendingConfigurationIntent: WidgetConfigurationIntent {
     static let title: LocalizedStringResource = "GitHub Trending"
-    static let description = IntentDescription("GitHub Trending 상위 5개 레포를 보여줍니다.")
+    static let description = IntentDescription("GitHub Trending 상위 레포를 보여줍니다.")
 
     @Parameter(title: "언어", default: .all)
     var language: TrendingLanguage
@@ -88,17 +155,30 @@ struct TrendingConfigurationIntent: WidgetConfigurationIntent {
     @Parameter(title: "사용 언어", default: .all)
     var spokenLanguage: TrendingSpokenLanguage
 
+    @Parameter(title: "표시 개수", description: "중간 크기 위젯은 최대 7개까지 표시됩니다.", default: .five)
+    var itemCount: TrendingItemCount
+
+    @Parameter(title: "갱신 주기", default: .hour1)
+    var refreshInterval: TrendingRefreshInterval
+
+    @Parameter(title: "표시 언어", default: .system)
+    var displayLanguage: TrendingDisplayLanguage
+
     init() {}
 
-    init(language: TrendingLanguage, period: TrendingPeriod, spokenLanguage: TrendingSpokenLanguage = .all) {
+    init(language: TrendingLanguage, period: TrendingPeriod, spokenLanguage: TrendingSpokenLanguage = .all,
+         itemCount: TrendingItemCount = .five, refreshInterval: TrendingRefreshInterval = .hour1, displayLanguage: TrendingDisplayLanguage = .system) {
         self.language = language
         self.period = period
         self.spokenLanguage = spokenLanguage
+        self.itemCount = itemCount
+        self.refreshInterval = refreshInterval
+        self.displayLanguage = displayLanguage
     }
 }
 
-/// Intent에서 네트워크/캐시 계층이 쓰는 값만 뽑은 Sendable 값 타입.
-/// Intent(@Parameter 래퍼 포함)를 그대로 넘기지 않고 이걸 넘겨서 동시성 경계를 깔끔하게 유지한다.
+/// The part of the configuration that determines what is fetched and cached.
+/// A plain `Sendable` value, so the intent itself never crosses concurrency boundaries.
 struct TrendingQuery: Sendable, Hashable {
     let language: TrendingLanguage
     let period: TrendingPeriod
@@ -118,6 +198,5 @@ struct TrendingQuery: Sendable, Hashable {
         return URL(string: s)!
     }
 
-    /// UserDefaults 캐시 키 (설정 조합마다 별도 캐시)
     var cacheKey: String { "trending.cache.\(language.rawValue).\(period.rawValue).\(spokenLanguage.rawValue)" }
 }

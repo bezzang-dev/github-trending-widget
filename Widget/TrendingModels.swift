@@ -1,32 +1,30 @@
 import Foundation
 
-/// 트렌딩 레포 1개. (Java의 record/DTO에 해당)
-/// - `Codable`: JSON 직렬화 (Jackson 역할) → UserDefaults 캐시에 사용
-/// - `Sendable`: 스레드(동시성 도메인) 간에 안전하게 넘길 수 있다는 표시. Swift 6에서 필수에 가까움
+/// One repository row from github.com/trending.
 struct TrendingRepo: Codable, Sendable, Hashable, Identifiable {
     let owner: String
     let name: String
     let description: String?
     let language: String?
-    /// GitHub 페이지가 주는 언어 색 (예: "#3572A5"). SwiftUI 의존을 없애려고 문자열로 보관
+    /// Language color from the page, e.g. "#3572A5". Kept as a string so this type stays UI-agnostic.
     let languageColorHex: String?
     let stars: Int
     let forks: Int
-    /// 선택한 기간(오늘/이번 주/이번 달) 동안 늘어난 스타 수
+    /// Stars gained during the selected period.
     let periodStars: Int
 
     var id: String { "\(owner)/\(name)" }
     var url: URL { URL(string: "https://github.com/\(owner)/\(name)")! }
 }
 
-/// 한 번 성공적으로 받아온 결과 묶음 (캐시 단위)
+/// The result of one successful fetch; this is what gets cached.
 struct TrendingSnapshot: Codable, Sendable {
     let repos: [TrendingRepo]
     let fetchedAt: Date
 }
 
 extension TrendingRepo {
-    /// 위젯 갤러리 미리보기 / placeholder / #Preview 용 샘플 데이터
+    /// Sample data for placeholders, the widget gallery and previews.
     static let samples: [TrendingRepo] = [
         .init(owner: "anthropics", name: "skills", description: "Public repository for Agent Skills",
               language: "Python", languageColorHex: "#3572A5", stars: 190_461, forks: 22_408, periodStars: 1_052),
@@ -38,5 +36,15 @@ extension TrendingRepo {
               language: "TypeScript", languageColorHex: "#3178c6", stars: 102_000, forks: 12_500, periodStars: 199),
         .init(owner: "rust-lang", name: "rust", description: "Empowering everyone to build reliable and efficient software.",
               language: "Rust", languageColorHex: "#dea584", stars: 99_800, forks: 12_900, periodStars: 156),
+        .init(owner: "golang", name: "go", description: "The Go programming language",
+              language: "Go", languageColorHex: "#00ADD8", stars: 125_000, forks: 17_800, periodStars: 131),
+        .init(owner: "JetBrains", name: "kotlin", description: "The Kotlin Programming Language.",
+              language: "Kotlin", languageColorHex: "#A97BFF", stars: 50_100, forks: 5_800, periodStars: 98),
+        .init(owner: "python", name: "cpython", description: "The Python programming language",
+              language: "Python", languageColorHex: "#3572A5", stars: 64_900, forks: 31_000, periodStars: 87),
+        .init(owner: "flutter", name: "flutter", description: "Flutter makes it easy and fast to build beautiful apps for mobile and beyond",
+              language: "Dart", languageColorHex: "#00B4AB", stars: 167_000, forks: 28_000, periodStars: 64),
+        .init(owner: "nodejs", name: "node", description: "Node.js JavaScript runtime",
+              language: "JavaScript", languageColorHex: "#f1e05a", stars: 109_000, forks: 30_000, periodStars: 52),
     ]
 }

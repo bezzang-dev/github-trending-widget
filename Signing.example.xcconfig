@@ -1,6 +1,6 @@
-// 서명 설정 예시. 이 파일을 Signing.xcconfig 로 복사한 뒤 자신의 팀 ID를 넣으세요.
+// Code signing settings. Copy this file to Signing.xcconfig and fill in your team ID.
 //   cp Signing.example.xcconfig Signing.xcconfig
-// 팀 ID 확인: Xcode → Settings → Accounts 에서 Apple ID 로그인 후
+// To find your team ID, sign in under Xcode → Settings → Accounts, then run
 //   security find-certificate -c "Apple Development" -p | openssl x509 -noout -subject
-//   → 출력의 OU= 뒤 10자리
+//   and take the 10 characters after OU= in the output.
 DEVELOPMENT_TEAM =
