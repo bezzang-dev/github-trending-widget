@@ -7,7 +7,7 @@ Built with SwiftUI, WidgetKit and App Intents only, with no third-party dependen
 
 - Requires macOS 14 (Sonoma) or later
 - Sizes: **Medium** shows single-line rows (up to 7, with a smaller font above 5); **Large** adds the description, language, stars and forks (at 7 items it drops the stats line; at 10 it uses single-line rows)
-- Configurable in Edit Widget: **language, period, spoken language, item count (3/5/7/10), refresh interval, display language**
+- Configurable in Edit Widget: **programming language, period, spoken language, item count (3/5/7/10), refresh interval, display language**
 - Display language: System / 한국어 / English (applies to the widget's text and time format)
 - Refreshes at the chosen interval (1 hour by default, 15 minutes to 12 hours) and retries within 15 minutes after a failure. When a refresh fails, the last successful result is shown with a ⚠️ icon
 - Clicking a row opens the repository in your browser
@@ -102,7 +102,7 @@ The system registers the widget the first time the app runs. Then:
 1. Click the **date and time** in the menu bar to open Notification Center.
 2. Click **Edit Widgets…** at the bottom (or right-click the desktop → Edit Widgets…).
 3. Select **GitHubTrending** in the list and drag a medium or large widget into place.
-4. Right-click the widget → **Edit Widget** to choose the language, period, spoken language, item count, refresh interval and display language.
+4. Right-click the widget → **Edit Widget** to choose the programming language, period, spoken language, item count, refresh interval and display language.
 
 > Copying the app to `/Applications` keeps the widget working reliably across restarts.
 > If you do, **copy it again after every build**; otherwise the system keeps running the old copy in `/Applications`.

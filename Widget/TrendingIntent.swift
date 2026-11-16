@@ -8,7 +8,7 @@ enum TrendingLanguage: String, AppEnum {
     case all, java, javascript, typescript, python, swift, kotlin, go, rust
     case cpp, c, csharp, ruby, php, shell, dart, jupyterNotebook
 
-    static let typeDisplayRepresentation: TypeDisplayRepresentation = "언어"
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "프로그래밍 언어"
     static let caseDisplayRepresentations: [TrendingLanguage: DisplayRepresentation] = [
         .all: "전체", .java: "Java", .javascript: "JavaScript", .typescript: "TypeScript",
         .python: "Python", .swift: "Swift", .kotlin: "Kotlin", .go: "Go", .rust: "Rust",
@@ -126,7 +126,7 @@ enum TrendingItemCount: String, AppEnum {
 enum TrendingDisplayLanguage: String, AppEnum {
     case system, ko, en
 
-    static let typeDisplayRepresentation: TypeDisplayRepresentation = "표시 언어"
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "위젯 표시 언어"
     static let caseDisplayRepresentations: [TrendingDisplayLanguage: DisplayRepresentation] = [
         .system: "시스템 설정", .ko: "한국어", .en: "English",
     ]
@@ -146,13 +146,13 @@ struct TrendingConfigurationIntent: WidgetConfigurationIntent {
     static let title: LocalizedStringResource = "GitHub Trending"
     static let description = IntentDescription("GitHub Trending 상위 레포를 보여줍니다.")
 
-    @Parameter(title: "언어", default: .all)
+    @Parameter(title: "프로그래밍 언어", default: .all)
     var language: TrendingLanguage
 
     @Parameter(title: "기간", default: .daily)
     var period: TrendingPeriod
 
-    @Parameter(title: "사용 언어", default: .all)
+    @Parameter(title: "사용 언어", description: "레포 설명·README에 쓰인 언어로 필터링합니다.", default: .all)
     var spokenLanguage: TrendingSpokenLanguage
 
     @Parameter(title: "표시 개수", description: "중간 크기 위젯은 최대 7개까지 표시됩니다.", default: .five)
@@ -161,7 +161,7 @@ struct TrendingConfigurationIntent: WidgetConfigurationIntent {
     @Parameter(title: "갱신 주기", default: .hour1)
     var refreshInterval: TrendingRefreshInterval
 
-    @Parameter(title: "표시 언어", default: .system)
+    @Parameter(title: "위젯 표시 언어", description: "위젯 안 문구의 언어입니다.", default: .system)
     var displayLanguage: TrendingDisplayLanguage
 
     init() {}
